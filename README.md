@@ -137,8 +137,6 @@ Add screenshots of the actual application in the `screenshots/` directory.
 
 ![Delete confirmation](screenshots/delete_confirmation.png)
 
-*Make sure the image filenames match the actual files in the repository.*
-
 ## 7. Database Systems Questions and Answers
 
 **(a) What is the purpose of a primary key in the `AUTHOR` and `BOOK` tables?**
