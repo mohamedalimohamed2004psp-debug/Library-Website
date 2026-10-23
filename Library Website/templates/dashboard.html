@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة المكتبة - لوحة التحكم</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: #fff;
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .modal-box h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .btn-confirm {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-cancel {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+
+    <div class="dashboard-container">
+        <!-- شريط الترحيب والأزرار -->
+        <div class="header-section">
+            <div>
+                <h2>مرحباً بك، {{ user_name }} 👋</h2>
+            </div>
+            <div class="actions-btns">
+                <a href="/add_author" class="btn-author">➕ إضافة مؤلف</a>
+                <a href="/add_book" class="btn-book">📚 إضافة كتاب</a>
+                <a href="/logout" class="btn-logout">🚪 تسجيل الخروج</a>
+            </div>
+        </div>
+
+        <!-- جدول المؤلفين -->
+        <div class="table-card">
+            <h3>قائمة المؤلفين (Authors)</h3>
+            {% if authors %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>رقم المؤلف (ID)</th>
+                            <th>اسم المؤلف</th>
+                            <th>الدولة</th>
+                            <th>التحكم</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for author in authors %}
+                        <tr>
+                            <td>{{ author.author_id }}</td>
+                            <td>{{ author.name }}</td>
+                            <td>{{ author.country }}</td>
+                            <td class="action-links">
+                                <a href="/edit_author/{{ author.author_id }}" class="edit-btn">تعديل ✏️</a>
+                                <button type="button" onclick="openDeleteModal('/delete_author/{{ author.author_id }}')" class="delete-btn" style="background:none; border:none; cursor:pointer; font-weight:600;">حذف 🗑️</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="text-align: center; color: #7f8c8d;">لا يوجد مؤلفون مضافون حالياً.</p>
+            {% endif %}
+        </div>
+
+        <!-- جدول الكتب -->
+        <div class="table-card">
+            <h3>قائمة الكتب (Books)</h3>
+            {% if books %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>رقم الكتاب (ID)</th>
+                            <th>عنوان الكتاب</th>
+                            <th>السعر</th>
+                            <th>رقم المؤلف (Author ID)</th>
+                            <th>التحكم</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for book in books %}
+                        <tr>
+                            <td>{{ book.book_id }}</td>
+                            <td>{{ book.title }}</td>
+                            <td>$ {{ book.price }}</td>
+                            <td>{{ book.author_id }}</td>
+                            <td class="action-links">
+                                <a href="/edit_book/{{ book.book_id }}" class="edit-btn">تعديل ✏️</a>
+                                <button type="button" onclick="openDeleteModal('/delete_book/{{ book.book_id }}')" class="delete-btn" style="background:none; border:none; cursor:pointer; font-weight:600;">حذف 🗑️</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="text-align: center; color: #7f8c8d;">لا توجد كتب مضافة حالياً.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- نافذة التأكيد (Modal) المنسقة في المنتصف -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>هل أنت متأكد من الحذف ؟ ⚠️</h3>
+            <div class="modal-buttons">
+                <button id="confirmDeleteBtn" class="btn-confirm">نعم، حذف</button>
+                <button onclick="closeDeleteModal()" class="btn-cancel">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let deleteTargetUrl = null;
+
+        function openDeleteModal(url) {
+            deleteTargetUrl = url;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deleteTargetUrl = null;
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            if (deleteTargetUrl) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = deleteTargetUrl;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    </script>
+</body>
+</html>
