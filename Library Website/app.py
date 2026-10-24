@@ -3,7 +3,7 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+app.secret_key = 'your_super_secret_key_12345'
 
 # إعدادات الاتصال بقاعدة بيانات المكتبة (library_db)
 db_config = {
@@ -68,21 +68,22 @@ def register():
                 
     return render_template('register.html', error=error)
 
-# لوحة التحكم الرئيسية (عرض الكتب والمؤلفين)
+# لوحة التحكم الرئيسية (عرض كتب ومؤلفي المستخدم الحالي فقط)
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
+    user_id = session['user_id']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
-    # جلب المؤلفين
-    cursor.execute("SELECT * FROM AUTHOR")
+    # جلب مؤلفي هذا المستخدم فقط
+    cursor.execute("SELECT * FROM AUTHOR WHERE user_id = %s", (user_id,))
     authors = cursor.fetchall()
     
-    # جلب الكتب
-    cursor.execute("SELECT * FROM BOOK")
+    # جلب كتب هذا المستخدم فقط
+    cursor.execute("SELECT * FROM BOOK WHERE user_id = %s", (user_id,))
     books = cursor.fetchall()
     
     cursor.close()
@@ -90,7 +91,7 @@ def dashboard():
     
     return render_template('dashboard.html', user_name=session['user_name'], authors=authors, books=books)
 
-# إضافة مؤلف جديد
+# إضافة مؤلف جديد (مربوط بالمستخدم الحالي)
 @app.route('/add_author', methods=['GET', 'POST'])
 def add_author():
     if 'user_id' not in session:
@@ -99,10 +100,11 @@ def add_author():
     if request.method == 'POST':
         name = request.form['name']
         country = request.form['country']
+        user_id = session['user_id']
         
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO AUTHOR (name, country) VALUES (%s, %s)", (name, country))
+        cursor.execute("INSERT INTO AUTHOR (name, country, user_id) VALUES (%s, %s, %s)", (name, country, user_id))
         conn.commit()
         cursor.close()
         conn.close()
@@ -110,12 +112,13 @@ def add_author():
         
     return render_template('add_author.html')
 
-# إضافة كتاب جديد
+# إضافة كتاب جديد (مربوط بالمستخدم الحالي)
 @app.route('/add_book', methods=['GET', 'POST'])
 def add_book():
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
+    user_id = session['user_id']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -124,49 +127,60 @@ def add_book():
         price = request.form['price']
         author_id = request.form['author_id']
         
-        cursor.execute("INSERT INTO BOOK (title, price, author_id) VALUES (%s, %s, %s)", (title, price, author_id))
-        conn.commit()
+        # التأكد أن المؤلف يتبع لهذا المستخدم قبل ربط الكتاب به
+        cursor.execute("SELECT * FROM AUTHOR WHERE author_id = %s AND user_id = %s", (author_id, user_id))
+        if cursor.fetchone():
+            cursor.execute("INSERT INTO BOOK (title, price, author_id, user_id) VALUES (%s, %s, %s, %s)", (title, price, author_id, user_id))
+            conn.commit()
+            
         cursor.close()
         conn.close()
         return redirect(url_for('dashboard'))
         
-    cursor.execute("SELECT * FROM AUTHOR")
+    # جلب مؤلفي المستخدم الحالي فقط لاختيارهم في القائمة
+    cursor.execute("SELECT * FROM AUTHOR WHERE user_id = %s", (user_id,))
     authors = cursor.fetchall()
     cursor.close()
     conn.close()
     
     return render_template('add_book.html', authors=authors)
 
-# تعديل بيانات مؤلف
+# تعديل بيانات مؤلف (بشرط أن يملكه المستخدم الحالي)
 @app.route('/edit_author/<int:author_id>', methods=['GET', 'POST'])
 def edit_author(author_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
+    user_id = session['user_id']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
     if request.method == 'POST':
         name = request.form['name']
         country = request.form['country']
-        cursor.execute("UPDATE AUTHOR SET name = %s, country = %s WHERE author_id = %s", (name, country, author_id))
+        cursor.execute("UPDATE AUTHOR SET name = %s, country = %s WHERE author_id = %s AND user_id = %s", (name, country, author_id, user_id))
         conn.commit()
         cursor.close()
         conn.close()
         return redirect(url_for('dashboard'))
         
-    cursor.execute("SELECT * FROM AUTHOR WHERE author_id = %s", (author_id,))
+    cursor.execute("SELECT * FROM AUTHOR WHERE author_id = %s AND user_id = %s", (author_id, user_id))
     author = cursor.fetchone()
     cursor.close()
     conn.close()
+    
+    if not author:
+        return redirect(url_for('dashboard'))
+        
     return render_template('edit_author.html', author=author)
 
-# تعديل بيانات كتاب
+# تعديل بيانات كتاب (بشرط أن يملكه المستخدم الحالي)
 @app.route('/edit_book/<int:book_id>', methods=['GET', 'POST'])
 def edit_book(book_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
+    user_id = session['user_id']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -174,43 +188,51 @@ def edit_book(book_id):
         title = request.form['title']
         price = request.form['price']
         author_id = request.form['author_id']
-        cursor.execute("UPDATE BOOK SET title = %s, price = %s, author_id = %s WHERE book_id = %s", (title, price, author_id, book_id))
+        cursor.execute("UPDATE BOOK SET title = %s, price = %s, author_id = %s WHERE book_id = %s AND user_id = %s", (title, price, author_id, book_id, user_id))
         conn.commit()
         cursor.close()
         conn.close()
         return redirect(url_for('dashboard'))
         
-    cursor.execute("SELECT * FROM BOOK WHERE book_id = %s", (book_id,))
+    cursor.execute("SELECT * FROM BOOK WHERE book_id = %s AND user_id = %s", (book_id, user_id))
     book = cursor.fetchone()
-    cursor.execute("SELECT * FROM AUTHOR")
+    
+    if not book:
+        cursor.close()
+        conn.close()
+        return redirect(url_for('dashboard'))
+        
+    cursor.execute("SELECT * FROM AUTHOR WHERE user_id = %s", (user_id,))
     authors = cursor.fetchall()
     cursor.close()
     conn.close()
     return render_template('edit_book.html', book=book, authors=authors)
 
-# حذف مؤلف (مع تفعيل ON DELETE CASCADE لحذف كتبه تلقائياً)
+# حذف مؤلف (للمستخدم الحالي فقط)
 @app.route('/delete_author/<int:author_id>', methods=['POST'])
 def delete_author(author_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
+    user_id = session['user_id']
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM AUTHOR WHERE author_id = %s", (author_id,))
+    cursor.execute("DELETE FROM AUTHOR WHERE author_id = %s AND user_id = %s", (author_id, user_id))
     conn.commit()
     cursor.close()
     conn.close()
     return redirect(url_for('dashboard'))
 
-# حذف كتاب
+# حذف كتاب (للمستخدم الحالي فقط)
 @app.route('/delete_book/<int:book_id>', methods=['POST'])
 def delete_book(book_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
+    user_id = session['user_id']
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM BOOK WHERE book_id = %s", (book_id,))
+    cursor.execute("DELETE FROM BOOK WHERE book_id = %s AND user_id = %s", (book_id, user_id))
     conn.commit()
     cursor.close()
     conn.close()
