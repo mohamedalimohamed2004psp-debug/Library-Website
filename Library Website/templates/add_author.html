@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إضافة مؤلف جديد</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="card">
+        <h2>إضافة مؤلف جديد ✍️</h2>
+        <form method="POST" action="/add_author">
+            <label>اسم المؤلف (Name)</label>
+            <input type="text" name="name" placeholder="مثال: Naguib Mahfouz" required>
+
+            <label>الدولة (Country)</label>
+            <input type="text" name="country" placeholder="مثال: Egypt" required>
+
+            <button type="submit">حفظ المؤلف</button>
+        </form>
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="/dashboard" style="color: #7f8c8d; text-decoration: none; font-size: 14px;">الرجوع للوحة التحكم</a>
+        </div>
+    </div>
+</body>
+</html>

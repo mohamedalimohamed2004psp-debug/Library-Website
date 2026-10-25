@@ -1,0 +1,167 @@
+/* --- 1. التنسيقات العامة للنماذج (تسجيل الدخول والتسجيل) --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.card {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 400px;
+    box-sizing: border-box;
+}
+
+.card h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    text-align: center;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #d1d8e0;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+button[type="submit"] {
+    width: 100%;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button[type="submit"]:hover {
+    background-color: #2980b9;
+}
+
+.error {
+    background-color: #ffeaa7;
+    color: #d63031;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* --- 2. تنسيقات لوحة التحكم (Dashboard) الواسعة والمرتبة في المنتصف --- */
+body.dashboard-body {
+    display: block;
+    padding: 40px 20px;
+    background-color: #f4f6f9;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.header-section {
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header-section h2 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.header-section p {
+    margin: 5px 0 0 0;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.actions-btns a {
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #fff;
+    margin-left: 10px;
+    transition: 0.3s;
+    display: inline-block;
+}
+
+.btn-author { background-color: #3498db; }
+.btn-book { background-color: #2ecc71; }
+.btn-logout { background-color: #e74c3c; }
+.actions-btns a:hover { opacity: 0.9; }
+
+.table-card {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+}
+
+.table-card h3 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 2px solid #f1f2f6;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.table-card table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: right;
+}
+
+.table-card th, .table-card td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.table-card th {
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.action-links a, .action-links button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    margin-left: 10px;
+}
+
+.edit-btn { color: #f39c12; text-decoration: none; }
+.delete-btn { color: #e74c3c; }
